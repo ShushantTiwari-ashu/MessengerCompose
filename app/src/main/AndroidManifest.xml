@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.shushant.messengercompose">
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <application
+        android:allowBackup="true"
+        android:name=".MessengerComposeApp"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MessengerCompose">
+        <activity
+            android:name=".ui.screens.MainActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="fullSensor"
+            >
+        </activity>
+        <activity
+            android:name=".ui.screens.LaunchScreen"
+            android:exported="true"
+            android:screenOrientation="fullSensor"
+            android:label="@string/app_name"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="com.shushant.messengercompose.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+
+            <meta-data
+                android:name="com.shushant.messengercompose.initializer.TimberInitializer"
+                android:value="androidx.startup" />
+            <meta-data
+                android:name="com.shushant.messengercompose.initializer.SandwichInitializer"
+                android:value="androidx.startup" />
+
+        </provider>
+    </application>
+
+</manifest>
