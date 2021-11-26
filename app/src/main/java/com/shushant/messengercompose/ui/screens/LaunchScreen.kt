@@ -1,20 +1,19 @@
 package com.shushant.messengercompose.ui.screens
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.animation.OvershootInterpolator
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -22,32 +21,49 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
-import androidx.navigation.NavController
 import com.shushant.messengercompose.R
 import com.shushant.messengercompose.ui.theme.MessengerComposeTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
+import com.google.firebase.auth.FirebaseAuth
+import androidx.compose.runtime.*
 
+import com.google.android.gms.tasks.OnFailureListener
+
+import com.google.firebase.auth.AuthResult
+
+import com.google.android.gms.tasks.OnSuccessListener
+import com.shushant.messengercompose.network.NetworkState
+import com.shushant.messengercompose.network.onSuccess
+import com.shushant.messengercompose.ui.screens.chat.ChatViewModel
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import timber.log.Timber
+
+
+@SuppressLint("CustomSplashScreen")
 @AndroidEntryPoint
 class LaunchScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             MessengerComposeTheme {
                 SplashScreens()
             }
         }
     }
+
 }
+
 
 @Composable
 fun SplashScreens() {
     val context = LocalContext.current
-
     val scale = remember {
         Animatable(0f)
     }
-
     // Animation
     LaunchedEffect(key1 = true) {
         scale.animateTo(
@@ -59,10 +75,18 @@ fun SplashScreens() {
                     OvershootInterpolator(4f).getInterpolation(it)
                 })
         )
+
         // Customize the delay time
-        delay(3000L)
+        delay(2000L)
         //navController.navigate("main_screen")
-        startActivity(context,Intent(context,MainActivity::class.java),null)
+        startActivity(
+            context,
+            Intent(
+                context,
+                if (FirebaseAuth.getInstance().currentUser != null) MainActivity::class.java else LoginActivity::class.java
+            ),
+            null
+        )
         val activity = (context as? Activity)
         activity?.finish()
     }
@@ -74,7 +98,7 @@ fun SplashScreens() {
     ) {
         // Change the logo
         Image(
-            painter = painterResource(id = R.drawable.ic_app),
+            painter = painterResource(id = R.drawable.logo),
             contentDescription = "Logo",
             modifier = Modifier
                 .scale(scale.value)

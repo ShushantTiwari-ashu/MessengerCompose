@@ -3,16 +3,26 @@ package com.shushant.messengercompose.ui.screens.chat
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil.ImageLoader
-import com.shushant.messengercompose.model.Data
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
+import com.shushant.messengercompose.model.Messages
+import com.shushant.messengercompose.model.UsersData
 import com.shushant.messengercompose.network.NetworkState
 import com.shushant.messengercompose.repository.MessengerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.zip
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -20,31 +30,72 @@ class ChatViewModel @Inject constructor(
     val imageLoader: ImageLoader,
     private val messengerRepository: MessengerRepository,
 ) : ViewModel() {
-    val moviePageStateFlow: MutableStateFlow<Int> = MutableStateFlow(1)
-    private val _movieLoadingState: MutableState<NetworkState> = mutableStateOf(NetworkState.IDLE)
+
+    var id: String = "0"
+    private var db: FirebaseDatabase = Firebase.database
+
+
+    private val _movieLoadingState: MutableState<NetworkState> = mutableStateOf(NetworkState.NODATAFOUND)
     val movieLoadingState: State<NetworkState> get() = _movieLoadingState
-    val users: State<MutableList<Data>> = mutableStateOf(mutableListOf())
+    private val _latestMessages = MutableLiveData<MutableList<UsersData>>()
+    val latestMessages: LiveData<MutableList<UsersData>> = _latestMessages
 
-    private val newUsersFlow = moviePageStateFlow.flatMapLatest {
-        _movieLoadingState.value = NetworkState.LOADING
-        messengerRepository.loadUsers(
-            page = it,
-            success = { _movieLoadingState.value = NetworkState.SUCCESS },
-            error = { _movieLoadingState.value = NetworkState.ERROR }
-        )
-    }.shareIn(viewModelScope, SharingStarted.WhileSubscribed(), replay = 1)
+    private val _firebaseusers = MutableLiveData<MutableList<UsersData>>()
 
-    fun fetchNextUserPage() {
-        if (movieLoadingState.value != NetworkState.LOADING) {
-            moviePageStateFlow.value++
-        }
-    }
+    private val _message = MutableLiveData("")
+    val message: LiveData<String> = _message
 
-    init {
+    val messages = MutableStateFlow<MutableList<Messages>?>(null)
+
+    fun fetchData() {
+        Timber.e("FetchData")
         viewModelScope.launch(Dispatchers.IO) {
-            newUsersFlow.collectLatest {
-                users.value.addAll(it)
+            messengerRepository.getUsers(
+                db,
+                success = {
+
+                },
+            ).zip(
+                messengerRepository.getlatestMessages(
+                    db,
+                    success = {  },
+                )
+            ) { initial, next ->
+                val messages = getUsersByLatestMessages(initial, next)
+                _latestMessages.postValue(messages)
+                if (messages.isNullOrEmpty()){
+                    _movieLoadingState.value = NetworkState.NODATAFOUND
+                }else{
+                    _movieLoadingState.value = NetworkState.SUCCESS
+                }
+                _firebaseusers.postValue(initial)
+                initial
+            }.collectLatest {
+                _firebaseusers.postValue(it)
             }
         }
     }
+
+    private fun getUsersByLatestMessages(
+        initial: MutableList<UsersData>,
+        next: MutableList<Messages>
+    ): MutableList<UsersData> {
+        val listOfUSers = mutableListOf<UsersData>()
+        next.forEach { model ->
+            val chatPartnerId: String =
+                if (model.sentBy == FirebaseAuth.getInstance().uid) {
+                    model.sentTo.toString()
+                } else {
+                    model.sentBy.toString()
+                }
+            val getUserBYID = initial.find { it.uid == chatPartnerId }
+            if (getUserBYID != null) {
+                getUserBYID.messages = model
+                listOfUSers.add(getUserBYID)
+            }
+        }
+        return listOfUSers
+    }
+
+
 }
