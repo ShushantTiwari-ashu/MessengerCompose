@@ -1,7 +1,7 @@
 # MessengerCompose
 ## Project characteristics and tech-stack
 
-<img src="misc/image/application_anim.gif" width="336" align="right" hspace="20">
+<img src="https://github.com/ShushantTiwari-ashu/MessengerCompose/blob/f4df027df8fd9f69ecbc1d01ad03a77e795ac775/ezgif.com-gif-maker%20(3).gif" width="336" align="right" hspace="20">
 
 This project takes advantage of best practices, many popular libraries and tools in the Android ecosystem. Most of the libraries are in the stable version unless there is a good reason to use non-stable dependency.
 
@@ -28,5 +28,5 @@ This project takes advantage of best practices, many popular libraries and tools
 Jetpack Compose](https://developer.android.com/jetpack/compose?gclid=CjwKCAiAqIKNBhAIEiwAu_ZLDoMaH7S9jATHeSOyOPS58B1D2mpfCkmQ8U__qs0kUAbvHsE_ySh-IhoCVicQAvD_BwE&gclsrc=aw.ds)
     * Reactive UI
 [![Demo MessengerCompose](https://github.com/ShushantTiwari-ashu/MessengerCompose/blob/9dd9f07432e73e6ed80ece49fed614e26e65b501/ezgif.com-gif-maker%20(1).gif)](https://vimeo.com/650207593)
-[![Demo MessengerCompose](https://github.com/ShushantTiwari-ashu/MessengerCompose/blob/0d25d2bcadd85b0792dea88ca38aefa387938a7b/ezgif.com-gif-maker%20(2).gif)](https://vimeo.com/650207593)
+[![Demo MessengerCompose](https://github.com/ShushantTiwari-ashu/MessengerCompose/blob/f4df027df8fd9f69ecbc1d01ad03a77e795ac775/ezgif.com-gif-maker%20(3).gif)](https://vimeo.com/650207593)
 
