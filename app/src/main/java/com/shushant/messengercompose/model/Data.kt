@@ -1,14 +1,17 @@
 package com.shushant.messengercompose.model
 
 
+import android.os.Parcelable
 import androidx.annotation.Keep
 import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import com.shushant.messengercompose.extensions.getRandomBoolean
 import com.shushant.messengercompose.extensions.getRandomString
+import kotlinx.parcelize.Parcelize
 
 @Keep
 @Immutable
+@Parcelize
 @Entity(primaryKeys = [("id")])
 data class Data(
     var firstName: String? = "", // Dylan
@@ -19,4 +22,4 @@ data class Data(
     var page: Int? = 1,
     var isDelivered: Boolean? = getRandomBoolean(),
     var message:String?=getRandomString(50)
-)
+):Parcelable

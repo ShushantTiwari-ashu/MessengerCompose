@@ -6,19 +6,23 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.shushant.messengercompose.model.Data
-import com.shushant.messengercompose.model.Stories
+import com.shushant.messengercompose.model.Messages
 
 @Dao
 interface MessengerDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertStories(movies: List<Data>)
+    suspend fun insertMessage(message: Messages)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertData(message: List<Data>)
 
     @Update
-    suspend fun updateStories(movie: Data)
+    suspend fun updateMessage(message: Messages)
 
-    @Query("SELECT * FROM Data WHERE id = :id_")
-    suspend fun getStory(id_: Long): Data
+    @Query("SELECT * FROM Messages WHERE id = :id_")
+    suspend fun getMessage(id_: String): Messages
 
-    @Query("SELECT * FROM Data WHERE page = :page_")
-    suspend fun getStoryList(page_: Int): List<Data>
+    @Query("SELECT * FROM Messages WHERE id =:id_ ORDER BY date DESC ")
+    suspend fun getMessageList(id_: String): List<Messages>
+
 }

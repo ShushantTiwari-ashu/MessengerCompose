@@ -3,15 +3,19 @@ package com.shushant.messengercompose.ui.screens.chat
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -19,66 +23,88 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.firebase.auth.FirebaseAuth
+import com.google.gson.Gson
 import com.shushant.messengercompose.R
 import com.shushant.messengercompose.extensions.*
-import com.shushant.messengercompose.model.Data
+import com.shushant.messengercompose.model.UsersData
 import com.shushant.messengercompose.network.NetworkState
 import com.shushant.messengercompose.network.onLoading
-import com.shushant.messengercompose.ui.screens.MyLazyRow
-import kotlinx.coroutines.flow.StateFlow
+import com.shushant.messengercompose.network.onNoData
+import com.shushant.messengercompose.network.onSuccess
+import com.shushant.messengercompose.persistence.SharedPrefs
 
 
 @ExperimentalMaterialApi
 @Composable
-fun ChatScreen(viewModel: ChatViewModel) {
+fun ChatScreen(openProfile: () -> Unit, detailScreen: (UsersData) -> Unit) {
     val textState = remember { mutableStateOf(TextFieldValue("")) }
-    Column {
-        TopHeader()
-        SearchComposable(textState)
-        MyChatLazyColumn(viewModel,textState)
+    val userData = remember {
+        mutableStateOf(SharedPrefs.read("User",""))
+    }
 
+    Column {
+        TopHeader(Gson().fromJson(userData.value,UsersData::class.java),openProfile)
+        SearchComposable(textState)
+        MyChatLazyColumn(textState = textState, detailScreen = detailScreen)
     }
 }
 
 
-
 @ExperimentalMaterialApi
 @Composable
-fun MyChatLazyColumn(viewModel: ChatViewModel, textState: MutableState<TextFieldValue>) {
+fun MyChatLazyColumn(
+    viewModel: ChatViewModel = hiltViewModel(),
+    textState: MutableState<TextFieldValue>,
+    detailScreen: (UsersData) -> Unit
+) {
     val networkState: NetworkState by viewModel.movieLoadingState
-    val usersList by viewModel.users
+    val usersList by viewModel.latestMessages.observeAsState(
+        initial = emptyList<UsersData>().toMutableList()
+    )
+    usersList.toSet().toMutableList()
+
+    LaunchedEffect(key1 = "LatestMessages"){
+        viewModel.fetchData()
+    }
+
     val searchedText = textState.value.text
-    val filteredUsers = if (searchedText.isEmpty()) {
-        usersList
-    } else {
-        val resultList = ArrayList<Data>()
-        for (users in usersList) {
-            if (users.firstName?.contains(searchedText,true) == true || users.lastName?.contains(
-                    searchedText,true
-                ) == true
+     val filteredUsers = if (searchedText.isEmpty()) {
+         usersList
+     } else {
+         val resultList = ArrayList<UsersData>()
+         for (users in usersList) {
+             if (users.name.contains(searchedText, true)
+             ) {
+                 resultList.add(users)
+             }
+         }
+         resultList
+     }
+
+    networkState.onSuccess {
+        LazyColumn(modifier = Modifier.padding(start = 10.dp, end = 10.dp)) {
+            itemsIndexed(filteredUsers.toSet().toMutableList()) { index, item ->
+                SwipeLeftRightCompose(item, detailScreen)
+            }
+        }
+    }
+    networkState.onNoData {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .wrapContentSize(Alignment.Center)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.no_message),
+                contentDescription = "",
+                contentScale = ContentScale.Inside,
+                modifier = Modifier.fillMaxSize()
             )
-            {
-                resultList.add(users)
-            }
-        }
-        resultList
-    }
-    LazyColumn {
-        paging(
-            items = filteredUsers,
-            currentIndexFlow = viewModel.moviePageStateFlow,
-            fetch = { viewModel.fetchNextUserPage() }
-        ) { item, index ->
-            if (index == 0) {
-                MyLazyRow(
-                    filteredUsers
-                )
-            } else {
-                SwipeLeftRightCompose(item)
-                //SwipeCompose(item)
-            }
         }
     }
+
     networkState.onLoading {
         Box(
             modifier = Modifier
@@ -95,7 +121,7 @@ fun MyChatLazyColumn(viewModel: ChatViewModel, textState: MutableState<TextField
 
 @ExperimentalMaterialApi
 @Composable
-fun SwipeLeftRightCompose(item: Data) {
+fun SwipeLeftRightCompose(item: UsersData, detailScreen: (UsersData) -> Unit) {
     RevealSwipe(
         modifier = Modifier.padding(vertical = 5.dp),
         directions = setOf(
@@ -134,13 +160,13 @@ fun SwipeLeftRightCompose(item: Data) {
             }, actionIconSize = 40.dp)
         }
     ) {
-        MessageItem(item = item)
+        MessageItem(item = item, detailScreen)
     }
 }
 
 
 @Composable
-fun TopHeader() {
+fun TopHeader(userData: UsersData?, openProfile: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -151,14 +177,16 @@ fun TopHeader() {
         Column(modifier = Modifier.wrapContentSize(Alignment.CenterStart)) {
             Row {
                 Spacer(modifier = Modifier.width(20.dp))
-                Image(
-                    painter = painterResource(id = R.drawable.oval),
-                    contentDescription = "Person",
+                NetworkImage(
+                    networkUrl = userData?.profilePic,
                     modifier = Modifier
-                        .align(Alignment.CenterVertically)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .clickable { openProfile.invoke() }
                         .background(
                             Color.Cyan, CircleShape
-                        ),
+                        )
+                        .align(Alignment.CenterVertically)
                 )
                 Spacer(modifier = Modifier.width(20.dp))
                 Text(
