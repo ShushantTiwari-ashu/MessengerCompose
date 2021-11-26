@@ -49,7 +49,6 @@ fun MessengerComposeTheme(
         systemUiController.setSystemBarsColor(
             color = Color.Transparent
         )
-
     }else{
         systemUiController.setSystemBarsColor(
             color = Color.White

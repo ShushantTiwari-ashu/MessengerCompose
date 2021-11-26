@@ -2,16 +2,21 @@ package com.shushant.messengercompose.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -19,53 +24,76 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.gson.Gson
 import com.shushant.messengercompose.R
 import com.shushant.messengercompose.extensions.NetworkImage
 import com.shushant.messengercompose.extensions.SearchComposable
-import com.shushant.messengercompose.extensions.paging
-import com.shushant.messengercompose.model.Data
+import com.shushant.messengercompose.extensions.getAvatar
+import com.shushant.messengercompose.model.UsersData
 import com.shushant.messengercompose.network.NetworkState
 import com.shushant.messengercompose.network.onLoading
-import com.shushant.messengercompose.ui.screens.chat.ChatViewModel
+import com.shushant.messengercompose.network.onNoData
+import com.shushant.messengercompose.network.onSuccess
+import com.shushant.messengercompose.persistence.SharedPrefs
+import com.shushant.messengercompose.utils.Utility.getTimeAgo
 
 @Composable
-fun FriendsScreen(viewModel: ChatViewModel) {
+fun FriendsScreen(
+    openProfile: () -> Unit,
+    opemChatPage: (UsersData) -> Unit,
+    ) {
     val textState = remember { mutableStateOf(TextFieldValue("")) }
+    val userData = remember {
+        mutableStateOf(SharedPrefs.read("User", ""))
+    }
     Column {
-        TopHeaderForFriends()
+        TopHeaderForFriends(Gson().fromJson(userData.value, UsersData::class.java),openProfile)
         SearchComposable(textState)
-        MyPeoplesColumn(viewModel, textState)
-
+        MyPeoplesColumn(textState = textState, opemChatPage = opemChatPage)
     }
 }
 
 @Composable
-fun MyPeoplesColumn(viewModel: ChatViewModel, textState: MutableState<TextFieldValue>) {
+fun MyPeoplesColumn(
+    viewModel: FriendsViewModel = hiltViewModel(),
+    textState: MutableState<TextFieldValue>,
+    opemChatPage: (UsersData) -> Unit
+) {
     val networkState: NetworkState by viewModel.movieLoadingState
-    val usersList by viewModel.users
+    val usersList by viewModel.firebaseusers.observeAsState(initial = emptyList<UsersData>().toMutableList())
     val searchedText = textState.value.text
     val filteredUsers = if (searchedText.isEmpty()) {
         usersList
     } else {
-        val resultList = ArrayList<Data>()
+        val resultList = ArrayList<UsersData>()
         for (users in usersList) {
-            if (users.firstName?.contains(searchedText,true) == true || users.lastName?.contains(
-                    searchedText,true
-                ) == true
-            )
-             {
+            if (users.name.contains(searchedText, true)
+            ) {
                 resultList.add(users)
             }
         }
         resultList
     }
-    LazyColumn {
-        paging(
-            items = filteredUsers,
-            currentIndexFlow = viewModel.moviePageStateFlow,
-            fetch = { viewModel.fetchNextUserPage() }
-        ) { item, index ->
-            UserItem(item = item, index)
+    networkState.onSuccess {
+        LazyColumn {
+            itemsIndexed(filteredUsers.toSet().toMutableList()) { _, item ->
+                UserItem(item = item, opemChatPage = opemChatPage)
+            }
+        }
+    }
+    networkState.onNoData {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .wrapContentSize(Alignment.Center)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.no),
+                contentDescription = "",
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier.fillMaxSize()
+            )
         }
     }
     networkState.onLoading {
@@ -84,7 +112,7 @@ fun MyPeoplesColumn(viewModel: ChatViewModel, textState: MutableState<TextFieldV
 }
 
 @Composable
-fun TopHeaderForFriends() {
+fun TopHeaderForFriends(userData: UsersData?, openProfile: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -95,14 +123,15 @@ fun TopHeaderForFriends() {
         Column(modifier = Modifier.wrapContentSize(Alignment.CenterStart)) {
             Row {
                 Spacer(modifier = Modifier.width(20.dp))
-                Image(
-                    painter = painterResource(id = R.drawable.oval),
-                    contentDescription = "Person",
+                NetworkImage(
+                    networkUrl = userData?.profilePic,
                     modifier = Modifier
-                        .align(Alignment.CenterVertically)
+                        .size(40.dp)
+                        .clip(CircleShape)
                         .background(
                             Color.Cyan, CircleShape
-                        ),
+                        )
+                        .align(Alignment.CenterVertically).clickable { openProfile.invoke() }
                 )
                 Spacer(modifier = Modifier.width(20.dp))
                 Text(
@@ -116,16 +145,6 @@ fun TopHeaderForFriends() {
             }
         }
         Row(horizontalArrangement = Arrangement.SpaceBetween) {
-            Image(
-                painterResource(id = R.drawable.ic_requests),
-                contentDescription = "Request",
-
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-
             Image(
                 painterResource(id = R.drawable.ic_add_contact),
                 contentDescription = "Add Contacts",
@@ -141,36 +160,41 @@ fun TopHeaderForFriends() {
 
 
 @Composable
-fun UserItem(item: Data, index: Int) {
+fun UserItem(item: UsersData, opemChatPage: (UsersData) -> Unit) {
     Row( // 1
         modifier = Modifier
             .padding(horizontal = 8.dp, vertical = 8.dp)
             .fillMaxSize()
-            .background(Color.White),
+            .background(Color.White)
+            .clickable { opemChatPage(item) },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceAround
     ) {
         Box(modifier = Modifier.align(Alignment.CenterVertically)) {
             NetworkImage(
-                networkUrl = item.picture,
+                networkUrl = item.name.getAvatar(),
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
                     .background(Color(0X04000000), CircleShape)
                     .align(Alignment.Center),
             )
-            if (index > 0 && item.isDelivered != true) {
-                Image(
-                    painter = painterResource(id = R.drawable.ic_was_online),
-                    contentDescription = "Online",
-                    modifier = Modifier.align(Alignment.BottomCenter)
-                )
-            }
-            if (index > 0 && item.isDelivered == true) {
+
+            if (item.online) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_oval_online),
                     contentDescription = "Online",
                     modifier = Modifier.align(Alignment.BottomEnd)
+                )
+            }else{
+                Text(
+                    text = item.currentTime.getTimeAgo(),
+                    fontSize = 8.sp,
+                    color = Color.Black,
+                    modifier = Modifier.background(
+                        Color(0XFFC7F0BB),
+                        RoundedCornerShape(18.dp)
+                    ).align(Alignment.BottomCenter)
                 )
             }
         }
@@ -180,7 +204,7 @@ fun UserItem(item: Data, index: Int) {
                 .align(Alignment.CenterVertically), horizontalAlignment = Alignment.Start
         ) {
             Text(
-                text = "${item.firstName} ${item.lastName}",
+                text = item.name,
                 style = TextStyle(fontWeight = FontWeight.Bold, color = Color.Black),
                 fontSize = 18.sp,
             )

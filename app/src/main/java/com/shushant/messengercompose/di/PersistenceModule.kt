@@ -22,7 +22,6 @@ object PersistenceModule {
     return Room
       .databaseBuilder(context, AppDatabase::class.java, "MessengerCompose.db")
       .fallbackToDestructiveMigration()
-      .allowMainThreadQueries()
       .build()
   }
 

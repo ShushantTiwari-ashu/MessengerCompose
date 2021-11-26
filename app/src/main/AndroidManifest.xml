@@ -11,10 +11,11 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MessengerCompose">
+        android:theme="@style/AppTheme">
         <activity
             android:name=".ui.screens.MainActivity"
             android:label="@string/app_name"
+            android:windowSoftInputMode="stateHidden|adjustResize"
             android:screenOrientation="fullSensor"
             >
         </activity>
@@ -30,6 +31,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".ui.screens.LoginActivity" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"
