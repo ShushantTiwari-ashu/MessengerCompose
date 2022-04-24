@@ -1,5 +1,6 @@
 package com.shushant.messengercompose.ui.screens
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -41,6 +42,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 
+@SuppressLint("CustomSplashScreen")
 @AndroidEntryPoint
 class LaunchScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

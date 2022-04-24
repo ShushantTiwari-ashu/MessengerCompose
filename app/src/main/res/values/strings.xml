@@ -59,4 +59,6 @@
     //configurations
     <string name="google_cloud_server_client_id" translatable="false">"131810820705-361gms6ip1irs83esv49dr0dcg9hpe53.apps.googleusercontent.com"</string>
     <string name="send_hi">Send Hi!! 👋</string>
+    <string name="pause">pause</string>
+    <string name="play">Play</string>
 </resources>

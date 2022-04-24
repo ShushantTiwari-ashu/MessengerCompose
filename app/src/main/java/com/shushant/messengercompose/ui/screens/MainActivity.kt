@@ -33,6 +33,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import com.giphy.sdk.ui.GPHSettings
 import com.giphy.sdk.ui.themes.GPHTheme
 import com.giphy.sdk.ui.views.GiphyDialogFragment
+import com.google.accompanist.pager.ExperimentalPagerApi
 
 
 @AndroidEntryPoint
@@ -46,6 +47,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @ExperimentalPagerApi
     @ExperimentalMaterial3Api
     @ExperimentalFoundationApi
     @ExperimentalMaterialApi
@@ -64,6 +66,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@ExperimentalPagerApi
 @ExperimentalMaterial3Api
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi
@@ -79,6 +82,7 @@ fun MainScreen(
 }
 
 
+@ExperimentalPagerApi
 @ExperimentalMaterial3Api
 @ExperimentalFoundationApi
 @ExperimentalMaterialApi

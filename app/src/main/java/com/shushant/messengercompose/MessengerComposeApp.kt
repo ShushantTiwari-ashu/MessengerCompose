@@ -34,7 +34,6 @@ class MessengerComposeApp : Application(), LifecycleEventObserver {
                                 .child("currentTime").setValue(System.currentTimeMillis())
                         }
                 }
-
             }
             Lifecycle.Event.ON_PAUSE -> {
                 val user = FirebaseAuth.getInstance().currentUser

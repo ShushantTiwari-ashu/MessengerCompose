@@ -3,20 +3,24 @@ package com.shushant.messengercompose.ui.screens.chat
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import coil.ImageLoader
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.*
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.shushant.messengercompose.model.Messages
 import com.shushant.messengercompose.model.UsersData
 import com.shushant.messengercompose.network.NetworkState
 import com.shushant.messengercompose.repository.MessengerRepository
-import com.shushant.messengercompose.ui.screens.NavigationItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.zip
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -31,16 +35,12 @@ class ChatViewModel @Inject constructor(
     private var db: FirebaseDatabase = Firebase.database
 
 
-    private val _selectedTab: MutableState<NavigationItem> =
-        mutableStateOf(NavigationItem.Chat)
-    val selectedTab: State<NavigationItem> get() = _selectedTab
     private val _movieLoadingState: MutableState<NetworkState> = mutableStateOf(NetworkState.NODATAFOUND)
     val movieLoadingState: State<NetworkState> get() = _movieLoadingState
-    val _latestMessages = MutableLiveData<MutableList<UsersData>>()
+    private val _latestMessages = MutableLiveData<MutableList<UsersData>>()
     val latestMessages: LiveData<MutableList<UsersData>> = _latestMessages
 
-    val _firebaseusers = MutableLiveData<MutableList<UsersData>>()
-    val firebaseusers: LiveData<MutableList<UsersData>> = _firebaseusers
+    private val _firebaseusers = MutableLiveData<MutableList<UsersData>>()
 
     private val _message = MutableLiveData("")
     val message: LiveData<String> = _message

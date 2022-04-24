@@ -1,7 +1,6 @@
 package com.shushant.messengercompose.ui.screens
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
@@ -27,21 +26,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.firebase.auth.FirebaseUser
-import com.google.gson.Gson
-import com.shushant.messengercompose.MessengerComposeApp
 import com.shushant.messengercompose.R
 import com.shushant.messengercompose.model.UsersData
 import com.shushant.messengercompose.network.NetworkState
 import com.shushant.messengercompose.network.onLoading
-import com.shushant.messengercompose.persistence.SharedPrefs
-import com.shushant.messengercompose.persistence.StoreUserEmail
 import com.shushant.messengercompose.ui.theme.MessengerComposeTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun LoginView(
@@ -73,7 +63,7 @@ fun LoginView(
             alreadyHaveAnAccount,
             onLoginClick = {
                 viewModel.login(context, email, password, fullname, loginActivity) {
-                    viewModel.getUserByID() {
+                    viewModel.getUserByID {
                         onLoginDOne(UsersData())
                     }
                 }
@@ -138,6 +128,7 @@ fun LoginFields(
                 placeholder = { Text(text = "Ashu sharma") },
                 label = { Text(text = "Fullname") },
                 onValueChange = onfullnameChange,
+
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
             )
@@ -162,7 +153,7 @@ fun LoginFields(
         )
 
         Button(onClick = {
-            if (!email.isBlank() && !password.isBlank()) {
+            if (email.isNotBlank() && password.isNotBlank()) {
                 onLoginClick(email)
                 focusManager.clearFocus()
             } else {
@@ -200,7 +191,7 @@ fun LoginFields(
 
 @AndroidEntryPoint
 class LoginActivity : AppCompatActivity() {
-    var alreadyLaunched = false
+    private var alreadyLaunched = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {

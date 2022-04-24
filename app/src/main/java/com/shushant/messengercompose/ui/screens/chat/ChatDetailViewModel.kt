@@ -1,20 +1,22 @@
 package com.shushant.messengercompose.ui.screens.chat
 
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import coil.ImageLoader
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.*
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ktx.database
-import com.google.firebase.database.ktx.getValue
 import com.google.firebase.ktx.Firebase
 import com.shushant.messengercompose.extensions.MESSAGES_CHILD
 import com.shushant.messengercompose.model.ConversationUiState
-import com.shushant.messengercompose.model.LottieFiles
 import com.shushant.messengercompose.model.Message1
 import com.shushant.messengercompose.model.Messages
 import com.shushant.messengercompose.repository.MessengerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -51,22 +53,6 @@ class ChatDetailViewModel @Inject constructor(
         messages.value = null
     }
 
-    fun getLottieFiles() {
-        db.reference.child("LottieFiles").addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                snapshot.children.forEach {
-                    val listOFFiles:List<LottieFiles> = it.value as List<LottieFiles>
-                    Timber.e(listOFFiles.toString())
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Timber.e(error.details)
-            }
-
-        })
-    }
-
 
     fun saveMessage(messages: Message1, onScroll: () -> Unit, to: String?, from: String?) {
         if (messages.message?.isNotEmpty() == true) {
@@ -88,7 +74,7 @@ class ChatDetailViewModel @Inject constructor(
             onScroll()
         }
     }
-    fun updateStatus(to: String?, from: String?){
+    private fun updateStatus(to: String?, from: String?){
         state.messages.forEach {
             if (it.status?.contains("sent") == true && it.sentBy != from ){
                 it.id?.child("status")?.setValue("seen")
