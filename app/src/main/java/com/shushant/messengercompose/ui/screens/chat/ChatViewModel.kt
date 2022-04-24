@@ -13,7 +13,6 @@ import com.shushant.messengercompose.model.Messages
 import com.shushant.messengercompose.model.UsersData
 import com.shushant.messengercompose.network.NetworkState
 import com.shushant.messengercompose.repository.MessengerRepository
-import com.shushant.messengercompose.ui.screens.NavigationItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -31,16 +30,12 @@ class ChatViewModel @Inject constructor(
     private var db: FirebaseDatabase = Firebase.database
 
 
-    private val _selectedTab: MutableState<NavigationItem> =
-        mutableStateOf(NavigationItem.Chat)
-    val selectedTab: State<NavigationItem> get() = _selectedTab
     private val _movieLoadingState: MutableState<NetworkState> = mutableStateOf(NetworkState.NODATAFOUND)
     val movieLoadingState: State<NetworkState> get() = _movieLoadingState
-    val _latestMessages = MutableLiveData<MutableList<UsersData>>()
+    private val _latestMessages = MutableLiveData<MutableList<UsersData>>()
     val latestMessages: LiveData<MutableList<UsersData>> = _latestMessages
 
-    val _firebaseusers = MutableLiveData<MutableList<UsersData>>()
-    val firebaseusers: LiveData<MutableList<UsersData>> = _firebaseusers
+    private val _firebaseusers = MutableLiveData<MutableList<UsersData>>()
 
     private val _message = MutableLiveData("")
     val message: LiveData<String> = _message
@@ -56,7 +51,7 @@ class ChatViewModel @Inject constructor(
 
                 },
             ).zip(
-                messengerRepository.getlatestMessages(
+                messengerRepository.latestMessages(
                     db,
                     success = {  },
                 )
@@ -80,7 +75,7 @@ class ChatViewModel @Inject constructor(
         initial: MutableList<UsersData>,
         next: MutableList<Messages>
     ): MutableList<UsersData> {
-        val listOfUSers = mutableListOf<UsersData>()
+        val listOfUSeers = mutableListOf<UsersData>()
         next.forEach { model ->
             val chatPartnerId: String =
                 if (model.sentBy == FirebaseAuth.getInstance().uid) {
@@ -91,10 +86,10 @@ class ChatViewModel @Inject constructor(
             val getUserBYID = initial.find { it.uid == chatPartnerId }
             if (getUserBYID != null) {
                 getUserBYID.messages = model
-                listOfUSers.add(getUserBYID)
+                listOfUSeers.add(getUserBYID)
             }
         }
-        return listOfUSers
+        return listOfUSeers
     }
 
 

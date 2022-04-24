@@ -1,11 +1,11 @@
 package com.shushant.messengercompose.ui.screens
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,10 +16,14 @@ import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -27,21 +31,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.firebase.auth.FirebaseUser
-import com.google.gson.Gson
-import com.shushant.messengercompose.MessengerComposeApp
 import com.shushant.messengercompose.R
 import com.shushant.messengercompose.model.UsersData
 import com.shushant.messengercompose.network.NetworkState
 import com.shushant.messengercompose.network.onLoading
-import com.shushant.messengercompose.persistence.SharedPrefs
-import com.shushant.messengercompose.persistence.StoreUserEmail
 import com.shushant.messengercompose.ui.theme.MessengerComposeTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun LoginView(
@@ -62,7 +57,16 @@ fun LoginView(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .background(Color.Transparent)
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        Color(0XFF310BE8),
+                        Color(0XFF0027FE),
+                        Color(0XFF8200FF),
+                        Color(0XFFD703FF)
+                    )
+                )
+            )
             .fillMaxSize()
             .clickable { focusManager.clearFocus() }
     ) {
@@ -121,15 +125,15 @@ fun LoginFields(
     ) {
 
         Image(
-            painterResource(id = R.drawable.logo),
+            painterResource(id = R.drawable.chatties_logo),
             contentDescription = "",
             modifier = Modifier.size(80.dp)
         )
 
         if (alreadyHaveAnAccount) {
-            Text("Login")
+            Text("Login", color = Color.White)
         } else {
-            Text("Registration")
+            Text("Registration", color = Color.White)
         }
 
         if (!alreadyHaveAnAccount) {
@@ -200,17 +204,27 @@ fun LoginFields(
 
 @AndroidEntryPoint
 class LoginActivity : AppCompatActivity() {
-    var alreadyLaunched = false
+    var once = true
+    @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            LoginView(viewModel = hiltViewModel(), this) {
+            AuthenticationView(authenticationViewModel = hiltViewModel(), formFill = {
+
+            }, home = {
+                if (once) {
+                    once = false
+                    startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                    finish()
+                }
+            })
+            /*LoginView(viewModel = hiltViewModel(), this) {
                 if (it != null && !alreadyLaunched) {
                     alreadyLaunched=  alreadyLaunched.not()
                     startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                     finish()
                 }
-            }
+            }*/
         }
     }
 }

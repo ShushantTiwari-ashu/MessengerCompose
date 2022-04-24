@@ -1,22 +1,29 @@
 package com.shushant.messengercompose.ui.screens.chat
 
-import androidx.lifecycle.*
+import android.net.Uri
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import coil.ImageLoader
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.*
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ktx.database
-import com.google.firebase.database.ktx.getValue
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
+import com.google.firebase.storage.ktx.storage
 import com.shushant.messengercompose.extensions.MESSAGES_CHILD
 import com.shushant.messengercompose.model.ConversationUiState
-import com.shushant.messengercompose.model.LottieFiles
 import com.shushant.messengercompose.model.Message1
 import com.shushant.messengercompose.model.Messages
 import com.shushant.messengercompose.repository.MessengerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -28,6 +35,7 @@ class ChatDetailViewModel @Inject constructor(
 
     var id: String = "0"
     private var db: FirebaseDatabase = Firebase.database
+    private var storageRef: StorageReference = Firebase.storage.reference
 
     private val _message = MutableLiveData("")
     val message: LiveData<String> = _message
@@ -40,9 +48,9 @@ class ChatDetailViewModel @Inject constructor(
             messengerRepository.getMessages(
                 id,
                 db
-            ).collectLatest {data->
+            ).collectLatest { data ->
                 state.addList(data.toSet().toMutableList())
-                updateStatus(id,FirebaseAuth.getInstance().uid)
+                updateStatus(id, FirebaseAuth.getInstance().uid)
             }
         }
     }
@@ -51,20 +59,14 @@ class ChatDetailViewModel @Inject constructor(
         messages.value = null
     }
 
-    fun getLottieFiles() {
-        db.reference.child("LottieFiles").addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                snapshot.children.forEach {
-                    val listOFFiles:List<LottieFiles> = it.value as List<LottieFiles>
-                    Timber.e(listOFFiles.toString())
+    fun sendTypingStatus(userCurrent: String, typing: Boolean) {
+        FirebaseAuth.getInstance().currentUser?.let { user ->
+            Firebase.database.reference.child("Users").child(user.uid).child("typing")
+                .setValue(typing).continueWith {
+                    Firebase.database.reference.child("Users").child(user.uid)
+                        .child("currentTime").setValue(System.currentTimeMillis())
                 }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Timber.e(error.details)
-            }
-
-        })
+        }
     }
 
 
@@ -72,10 +74,10 @@ class ChatDetailViewModel @Inject constructor(
         if (messages.message?.isNotEmpty() == true) {
             val messagesRef =
                 db.reference.child("/$MESSAGES_CHILD/${from}/${to}")
-            val revmessagesRef =
+            val reversesRef =
                 db.reference.child("/$MESSAGES_CHILD/${to}/${from}")
             messagesRef.push().setValue(messages).addOnCompleteListener {
-                revmessagesRef.push().setValue(messages)
+                reversesRef.push().setValue(messages)
             }.addOnFailureListener {
                 Timber.e("""ThrowError ${it.localizedMessage}""")
             }
@@ -88,13 +90,38 @@ class ChatDetailViewModel @Inject constructor(
             onScroll()
         }
     }
-    fun updateStatus(to: String?, from: String?){
+
+    private fun updateStatus(to: String?, from: String?) {
         state.messages.forEach {
-            if (it.status?.contains("sent") == true && it.sentBy != from ){
+            if (it.status?.contains("sent") == true && it.sentBy != from) {
                 it.id?.child("status")?.setValue("seen")
                 db.reference.child("/latest-messages/$to/$from").child("status").setValue("seen")
             }
         }
+    }
+
+    fun uploadFile(richContentFile: File, onSuccess: (Uri) ->Unit) {
+        val ref =
+            storageRef.child("chatContent/${FirebaseAuth.getInstance().currentUser?.uid}/${richContentFile.name}")
+        val uploadTask = ref.putFile(Uri.fromFile(richContentFile))
+        val urlTask = uploadTask.continueWithTask { task ->
+            if (!task.isSuccessful) {
+                task.exception?.let {
+                    throw it
+                }
+            }
+            ref.downloadUrl
+        }.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val downloadUri = task.result
+                onSuccess.invoke(downloadUri)
+            } else {
+                // Handle failures
+                // ...
+            }
+        }
+
+
     }
 
 }

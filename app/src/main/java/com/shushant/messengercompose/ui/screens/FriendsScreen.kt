@@ -22,6 +22,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -41,7 +42,7 @@ import com.shushant.messengercompose.utils.Utility.getTimeAgo
 @Composable
 fun FriendsScreen(
     openProfile: () -> Unit,
-    opemChatPage: (UsersData) -> Unit,
+    openChatPage: (UsersData) -> Unit,
     ) {
     val textState = remember { mutableStateOf(TextFieldValue("")) }
     val userData = remember {
@@ -50,7 +51,7 @@ fun FriendsScreen(
     Column {
         TopHeaderForFriends(Gson().fromJson(userData.value, UsersData::class.java),openProfile)
         SearchComposable(textState)
-        MyPeoplesColumn(textState = textState, opemChatPage = opemChatPage)
+        MyPeoplesColumn(textState = textState, openChatPage = openChatPage)
     }
 }
 
@@ -58,7 +59,7 @@ fun FriendsScreen(
 fun MyPeoplesColumn(
     viewModel: FriendsViewModel = hiltViewModel(),
     textState: MutableState<TextFieldValue>,
-    opemChatPage: (UsersData) -> Unit
+    openChatPage: (UsersData) -> Unit
 ) {
     val networkState: NetworkState by viewModel.movieLoadingState
     val usersList by viewModel.firebaseusers.observeAsState(initial = emptyList<UsersData>().toMutableList())
@@ -78,7 +79,7 @@ fun MyPeoplesColumn(
     networkState.onSuccess {
         LazyColumn {
             itemsIndexed(filteredUsers.toSet().toMutableList()) { _, item ->
-                UserItem(item = item, opemChatPage = opemChatPage)
+                UserItem(item = item, openChatPage = openChatPage)
             }
         }
     }
@@ -160,13 +161,13 @@ fun TopHeaderForFriends(userData: UsersData?, openProfile: () -> Unit) {
 
 
 @Composable
-fun UserItem(item: UsersData, opemChatPage: (UsersData) -> Unit) {
+fun UserItem(item: UsersData, openChatPage: (UsersData) -> Unit) {
     Row( // 1
         modifier = Modifier
             .padding(horizontal = 8.dp, vertical = 8.dp)
             .fillMaxSize()
             .background(Color.White)
-            .clickable { opemChatPage(item) },
+            .clickable { openChatPage(item) },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceAround
     ) {

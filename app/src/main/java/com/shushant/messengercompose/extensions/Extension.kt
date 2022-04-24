@@ -1,5 +1,6 @@
 package com.shushant.messengercompose.extensions
 
+import android.annotation.SuppressLint
 import android.content.res.Resources
 import android.util.Log
 import androidx.compose.foundation.background
@@ -22,8 +23,12 @@ import android.content.res.Configuration
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.Uri
 import android.os.Build
 import android.util.Patterns
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputConnection
+import android.widget.EditText
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -36,12 +41,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.core.view.inputmethod.EditorInfoCompat
+import androidx.core.view.inputmethod.InputConnectionCompat
 import com.google.android.gms.tasks.Task
 import com.shushant.messengercompose.R
 import com.shushant.messengercompose.ui.theme.MessengerComposeTheme
 import com.shushant.messengercompose.ui.theme.Typography
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.io.*
 import kotlin.coroutines.resumeWithException
 
 //Don't touch this. It's behind your reasoning!
@@ -113,7 +123,6 @@ fun Context.isSystemDarkMode(): Boolean {
     return (resources.configuration.uiMode + Configuration.UI_MODE_NIGHT_MASK) == UI_MODE_NIGHT_YES
 }
 
-const val MESSAGES = "messages"
 const val MESSAGE = "message"
 const val SENT_BY = "sent_by"
 const val SENT_ON = "sent_on"
@@ -122,9 +131,9 @@ const val MESSAGES_CHILD = "messages"
 const val USERS = "Users"
 const val ANONYMOUS = "anonymous"
 private const val LOADING_IMAGE_URL = "https://www.google.com/images/spin-32.gif"
-var idUser:String=""
+var idUser: String = ""
 
-fun <T : Any> mapToObject(map: Map<String, Any>, clazz: KClass<T>) : T {
+fun <T : Any> mapToObject(map: Map<String, Any>, clazz: KClass<T>): T {
     //Get default constructor
     val constructor = clazz.constructors.first()
 
@@ -232,6 +241,7 @@ fun SearchComposable(state: MutableState<TextFieldValue>) {
 }
 
 fun String.getAvatar() = "https://ui-avatars.com/api/?name=$this&background=102895&color=fff"
+
 @Composable
 fun Snackbar(snackbarHostState: SnackbarHostState) {
     ConstraintLayout(
@@ -418,3 +428,51 @@ fun SubmitButton(
         else Text(text = stringResource(id = textId), modifier = Modifier.padding(5.dp))
     }
 }
+
+
+fun writeToFileFromContentUri(file: File?, uri: Uri?,context:Context): Boolean  = runBlocking {
+    if (file == null || uri == null) return@runBlocking false
+    try {
+        val stream: InputStream? = context.getContentResolver().openInputStream(uri)
+        val output: OutputStream = FileOutputStream(file)
+        if (stream == null) return@runBlocking false
+        val buffer = ByteArray(4 * 1024)
+        var read: Int
+        while (stream.read(buffer).also { read = it } != -1) output.write(buffer, 0, read)
+        output.flush()
+        output.close()
+        stream.close()
+        return@runBlocking true
+    } catch (e: FileNotFoundException) {
+        Log.e("TAG", "Couldn't open stream: " + e.message)
+    } catch (e: IOException) {
+        Log.e("TAG", "IOException on stream: " + e.message)
+    }
+    return@runBlocking false
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

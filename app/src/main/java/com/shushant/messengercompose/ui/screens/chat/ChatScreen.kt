@@ -1,11 +1,15 @@
 package com.shushant.messengercompose.ui.screens.chat
 
-import androidx.compose.foundation.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.*
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.runtime.*
@@ -24,7 +28,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.firebase.auth.FirebaseAuth
 import com.google.gson.Gson
 import com.shushant.messengercompose.R
 import com.shushant.messengercompose.extensions.*
@@ -41,11 +44,11 @@ import com.shushant.messengercompose.persistence.SharedPrefs
 fun ChatScreen(openProfile: () -> Unit, detailScreen: (UsersData) -> Unit) {
     val textState = remember { mutableStateOf(TextFieldValue("")) }
     val userData = remember {
-        mutableStateOf(SharedPrefs.read("User",""))
+        mutableStateOf(SharedPrefs.read("User", ""))
     }
 
     Column {
-        TopHeader(Gson().fromJson(userData.value,UsersData::class.java),openProfile)
+        TopHeader(Gson().fromJson(userData.value, UsersData::class.java), openProfile)
         SearchComposable(textState)
         MyChatLazyColumn(textState = textState, detailScreen = detailScreen)
     }
@@ -65,27 +68,27 @@ fun MyChatLazyColumn(
     )
     usersList.toSet().toMutableList()
 
-    LaunchedEffect(key1 = "LatestMessages"){
+    LaunchedEffect(key1 = "LatestMessages") {
         viewModel.fetchData()
     }
 
     val searchedText = textState.value.text
-     val filteredUsers = if (searchedText.isEmpty()) {
-         usersList
-     } else {
-         val resultList = ArrayList<UsersData>()
-         for (users in usersList) {
-             if (users.name.contains(searchedText, true)
-             ) {
-                 resultList.add(users)
-             }
-         }
-         resultList
-     }
+    val filteredUsers = if (searchedText.isEmpty()) {
+        usersList
+    } else {
+        val resultList = ArrayList<UsersData>()
+        for (users in usersList) {
+            if (users.name.contains(searchedText, true)
+            ) {
+                resultList.add(users)
+            }
+        }
+        resultList
+    }
 
     networkState.onSuccess {
         LazyColumn(modifier = Modifier.padding(start = 10.dp, end = 10.dp)) {
-            itemsIndexed(filteredUsers.toSet().toMutableList()) { index, item ->
+            itemsIndexed(filteredUsers.toSet().toMutableList()) { _, item ->
                 SwipeLeftRightCompose(item, detailScreen)
             }
         }

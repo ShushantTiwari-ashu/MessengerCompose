@@ -11,14 +11,15 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 private val DarkColorPalette = darkColors(
     primary = purple200,
     primaryVariant = purple500,
-    secondary = background
+    secondary = background,
+    background = background
 )
 
 private val LightColorPalette = lightColors(
     primary = purple500,
     primaryVariant = purple500,
     secondary = background ,
-    background = Color.White,
+    background = background,
     surface = Color.White,
     onPrimary = Color.White,
     onSecondary = Color.Black,
@@ -29,9 +30,11 @@ private val LightColorPalette = lightColors(
 
 @Composable
 fun MessengerComposeTheme(
+    color:Color = Color.White,
     darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable() () -> Unit
-) {
+    content: @Composable() () -> Unit,
+
+    ) {
     val colors = if (darkTheme) {
         DarkColorPalette
     } else {
@@ -51,7 +54,8 @@ fun MessengerComposeTheme(
         )
     }else{
         systemUiController.setSystemBarsColor(
-            color = Color.White
+            color = color
         )
+
     }
 }

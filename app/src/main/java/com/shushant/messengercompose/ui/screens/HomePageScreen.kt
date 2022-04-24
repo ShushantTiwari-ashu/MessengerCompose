@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -17,9 +16,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.google.accompanist.insets.navigationBarsHeight
+import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.gson.Gson
 import com.shushant.messengercompose.ui.screens.chat.ChatScreen
+import com.shushant.messengercompose.ui.theme.MessengerComposeTheme
 
+@OptIn(ExperimentalPagerApi::class)
 @ExperimentalMaterialApi
 @Composable
 fun HomePageScreen(
@@ -37,7 +39,7 @@ fun HomePageScreen(
                             .fillMaxWidth()
                             .background(Color.LightGray)
                     )
-                    BottomNavigationBar(navController, viewModel)
+                    BottomNavigationBar(navController,viewModel)
                 }
             }
         ){ _ ->
@@ -55,6 +57,9 @@ fun HomePageScreen(
                             val json = Uri.encode(Gson().toJson(it))
                             navController.navigate("chat_detail"+"/${json}")
                         }
+                        NavigationItem.Videos -> MessengerComposeTheme(color = Color.Black) {
+                            VideosScreen()
+                        }
                         NavigationItem.Friends -> FriendsScreen(
                             openProfile = {
                                 viewModel.selectTab(NavigationItem.Discover)
@@ -65,6 +70,7 @@ fun HomePageScreen(
                         }
                         NavigationItem.Discover -> ProfileScreen(logout)
 
+                        else -> {}
                     }
                 }
             }
@@ -79,6 +85,7 @@ fun BottomNavigationBar(navController: NavController, viewModel: MainViewModel) 
 
     val items = listOf(
         NavigationItem.Chat,
+        NavigationItem.Videos,
         NavigationItem.Friends,
         NavigationItem.Discover
     )
@@ -98,14 +105,16 @@ fun BottomNavigationBar(navController: NavController, viewModel: MainViewModel) 
             .navigationBarsHeight(56.dp)
     ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination?.route
+        navBackStackEntry?.destination?.route
         items.forEach { item ->
             BottomNavigationItem(
                 icon = {
                     Icon(
                         painterResource(id = item.icon),
                         contentDescription = item.title,
-                        modifier = Modifier.size(60.dp)
+                        modifier = if (item.title == "Videos") Modifier.size(item.size) else Modifier.size(
+                            60.dp
+                        )
                     )
                 },
                 label = null,

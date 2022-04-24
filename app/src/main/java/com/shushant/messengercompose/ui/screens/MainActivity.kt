@@ -14,7 +14,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.fragment.app.FragmentManager
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.*
 import androidx.navigation.compose.NavHost
@@ -30,15 +29,11 @@ import com.shushant.messengercompose.model.UsersData
 import com.shushant.messengercompose.ui.screens.chat.ChatDetailScreen
 import com.shushant.messengercompose.ui.theme.MessengerComposeTheme
 import dagger.hilt.android.AndroidEntryPoint
-import com.giphy.sdk.ui.GPHSettings
-import com.giphy.sdk.ui.themes.GPHTheme
-import com.giphy.sdk.ui.views.GiphyDialogFragment
 
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     val viewModel: MainViewModel by viewModels()
-
 
     private val openDocument = registerForActivityResult(MyOpenDocumentContract()) { uri ->
         if (uri != null) {
@@ -59,7 +54,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun onImageSelected(uri: Uri, idUser: String) {
+    private fun onImageSelected(uri: Uri, idUser: String) {
         viewModel.sendImage(uri, this, idUser)
     }
 }
@@ -100,7 +95,19 @@ fun Navigation(
         )) {
             val device = it.arguments?.getParcelable<UsersData>("data")
             idUser = device?.uid ?: ""
-            ChatDetailScreen( openDocument, viewModel = hiltViewModel(), device) {
+            ChatDetailScreen(viewModel = hiltViewModel(), device, onVideoCallAudioCall = { data ->
+                navController.navigate("calling/{${data.first}}/{${data.second}}/{${data.third}}")
+            }) {
+                navController.navigateUp()
+            }
+        }
+
+        composable(NavigationItem.Calling.route) {
+            CallingScreen(
+                it.arguments?.getString("meeting_id"),
+                it.arguments?.getString("isVideoCall").toBoolean(),
+                it.arguments?.getString("isJoin").toBoolean()
+            ){
                 navController.navigateUp()
             }
         }
@@ -108,9 +115,9 @@ fun Navigation(
             HomePageScreen(navController = navController, viewModel = viewModel) {
                 val user = FirebaseAuth.getInstance().currentUser
                 if (user != null) {
-                    Firebase.database.reference.child("Users").child(user.uid ?: "").child("isOnline")
+                    Firebase.database.reference.child("Users").child(user.uid).child("isOnline")
                         .setValue(false).continueWith {
-                            Firebase.database.reference.child("Users").child(user.uid ?: "")
+                            Firebase.database.reference.child("Users").child(user.uid)
                                 .child("currentTime").setValue(System.currentTimeMillis())
                         }.continueWith {
                             FirebaseAuth.getInstance().signOut()

@@ -1,5 +1,5 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="app_name">Messenger Compose</string>
+    <string name="app_name">Chatties</string>
     <string name="emoji_selector_desc">Emoji selector</string>
     <string name="emoji_selector_bt_desc">Show Emoji selector</string>
     <string name="dm_desc">Direct Message</string>
@@ -13,7 +13,8 @@
     <string name="search">Search</string>
     <string name="info">Information</string>
     <string name="more_options">More options</string>
-
+    <string name="pref_speakerphone_key">speakerphone_preference</string>
+    <string name="pref_speakerphone_default">auto</string>
     <string name="app_name_placeholder">App Name</string>
     <string name="branding_sentence">Branding sentence describes your company or product</string>
     <string name="continue_with_email">Continue with Email</string>
@@ -59,4 +60,20 @@
     //configurations
     <string name="google_cloud_server_client_id" translatable="false">"131810820705-361gms6ip1irs83esv49dr0dcg9hpe53.apps.googleusercontent.com"</string>
     <string name="send_hi">Send Hi!! 👋</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="otp_empty">Otp is empty</string>
+    <string name="something_went_wrong">Something went wrong</string>
+    <string name="phone_number_empty">Empty phone number</string>
+    <string name="horiz_pager_with_transition_title">DemoPoc</string>
+    <string name="otp_sent">Otp sent</string>
+    <string name="enter_otp">Enter otp</string>
+    <string name="otp_helper">Insert the OTP to verify</string>
+    <string name="image_description">bwdkjbaljda</string>
+    <string name="okay">Okay</string>
+    <string name="welcome_to">Welcome to</string>
+    <string name="insert_phone_number">What\'s your phone?</string>
+    <string name="phone_helper">Enter your mobile number</string>
+    <string name="continue_button">Continue</string>
+    <string name="please_wait">Please wait</string>
 </resources>

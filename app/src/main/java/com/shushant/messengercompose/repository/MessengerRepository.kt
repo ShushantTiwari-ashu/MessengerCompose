@@ -9,8 +9,13 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.ktx.database
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.firestore.ktx.toObject
+import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
 import com.shushant.messengercompose.extensions.*
 import com.shushant.messengercompose.model.Message1
@@ -32,6 +37,8 @@ class MessengerRepository constructor(
     private val discoverService: MessengerService,
     private val messengerDao: MessengerDao,
 ) : Repository {
+    val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val db = Firebase.database
 
     init {
         Timber.d("Injection DiscoverRepository")
@@ -41,7 +48,7 @@ class MessengerRepository constructor(
     @WorkerThread
     fun getMessages(id: String, db: FirebaseDatabase) = callbackFlow {
         val listOfMessages = mutableListOf<Message1>()
-        db.reference.child("/$MESSAGES_CHILD/${FirebaseAuth.getInstance().currentUser?.uid}/${id}")
+        db.reference.child("/$MESSAGES_CHILD/${getCurrentUserId()}/${id}").orderByChild("date")
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(task: DataSnapshot) {
                     Timber.e(task.value.toString())
@@ -57,7 +64,6 @@ class MessengerRepository constructor(
                         }
                     } catch (e: Exception) {
                     }
-                    //listOfMessages.sortByDescending { it.date }
                     trySend(listOfMessages)
                 }
 
@@ -137,7 +143,7 @@ class MessengerRepository constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @WorkerThread
-    fun getlatestMessages(db: FirebaseDatabase, success: () -> Unit) = callbackFlow {
+    fun latestMessages(db: FirebaseDatabase, success: () -> Unit) = callbackFlow {
         val listOfMessages = mutableListOf<Messages>()
         db.reference.child("/latest-messages/${FirebaseAuth.getInstance().currentUser?.uid}")
             .addValueEventListener(object : ValueEventListener {
@@ -169,7 +175,46 @@ class MessengerRepository constructor(
     }.flowOn(Dispatchers.IO)
 
 
-    fun signInWithPhoneNumber(credential: PhoneAuthCredential) {
-        TODO("Not yet implemented")
+    fun checksForUserDetails(callbacks: FirestoreCallbacks) {
+        if (firebaseAuth.currentUser != null) {
+            val userId = getCurrentUserId()
+            db.reference.child(USERS).child(userId)
+                .addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        if (snapshot.exists()) {
+                            val userDetails = snapshot.getValue(UsersData::class.java)
+                            if (!userDetails?.uid.isNullOrBlank()) {
+                                if (userDetails != null) {
+                                    callbacks.userDetails(user = userDetails)
+                                }
+                            } else {
+                                callbacks.isFalse()
+                            }
+                        }
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        callbacks.onError(error.message)
+                    }
+                })
+        }
+    }
+
+    private fun getCurrentUserId(): String {
+        return firebaseAuth.currentUser?.uid ?: ""
+    }
+
+    fun setUserDetails(data: UsersData, callbacks: FirestoreCallbacks) {
+        if (firebaseAuth.currentUser != null) {
+            val userId = getCurrentUserId()
+            db.reference.child(USERS).child(userId).setValue(data)
+                .addOnCompleteListener { task ->
+                    if (task.exception != null) {
+                        callbacks.onError(task.exception?.localizedMessage ?: "")
+                        return@addOnCompleteListener
+                    }
+                    callbacks.isTrue()
+                }
+        }
     }
 }
