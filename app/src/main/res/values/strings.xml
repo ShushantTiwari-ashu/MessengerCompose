@@ -1,5 +1,5 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="app_name">Messenger Compose</string>
+    <string name="app_name">Chatties</string>
     <string name="emoji_selector_desc">Emoji selector</string>
     <string name="emoji_selector_bt_desc">Show Emoji selector</string>
     <string name="dm_desc">Direct Message</string>

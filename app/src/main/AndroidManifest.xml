@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.shushant.messengercompose">
+    package="com.shushant.chatties">
     <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
         android:allowBackup="true"
-        android:name=".MessengerComposeApp"
+        android:name="com.shushant.chatties.MessengerComposeApp"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -15,14 +15,14 @@
         android:theme="@style/AppTheme"
         tools:targetApi="m">
         <activity
-            android:name=".ui.screens.MainActivity"
+            android:name="com.shushant.chatties.ui.screens.MainActivity"
             android:label="@string/app_name"
             android:windowSoftInputMode="stateHidden|adjustResize"
             android:screenOrientation="fullSensor"
             >
         </activity>
         <activity
-            android:name=".ui.screens.LaunchScreen"
+            android:name="com.shushant.chatties.ui.screens.LaunchScreen"
             android:exported="true"
             android:screenOrientation="fullSensor"
             android:label="@string/app_name"
@@ -33,19 +33,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.screens.LoginActivity" />
+        <activity android:name="com.shushant.chatties.ui.screens.LoginActivity" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"
-            android:authorities="com.shushant.messengercompose.androidx-startup"
+            android:authorities="com.shushant.chatties.androidx-startup"
             android:exported="false"
             tools:node="merge">
 
             <meta-data
-                android:name="com.shushant.messengercompose.initializer.TimberInitializer"
+                android:name="com.shushant.chatties.initializer.TimberInitializer"
                 android:value="androidx.startup" />
             <meta-data
-                android:name="com.shushant.messengercompose.initializer.SandwichInitializer"
+                android:name="com.shushant.chatties.initializer.SandwichInitializer"
                 android:value="androidx.startup" />
 
         </provider>
